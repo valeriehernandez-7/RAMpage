@@ -220,3 +220,53 @@ legend {
   height: 0.75rem;
   border-radius: 2px;
 }
+
+/* MMU table */
+.columns h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.mmu {
+  max-height: 24rem;
+  overflow: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.mmu table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.mmu th {
+  position: sticky;
+  top: 0;
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.mmu td {
+  padding: 0.2rem 0.5rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 50%, transparent);
+  text-align: right;
+}
+
+.mmu tbody tr {
+  background: color-mix(in srgb, var(--row-color) 22%, transparent);
+}
+
+.mmu :is(th, td):nth-child(3) {
+  text-align: center;
+}
+
+.mmu .empty {
+  padding: 1rem;
+  color: var(--color-muted);
+  text-align: center;
+}

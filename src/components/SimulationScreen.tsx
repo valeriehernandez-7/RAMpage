@@ -4,6 +4,7 @@ import type { SimulationSetup } from './SetupScreen.tsx';
 import type { SessionSnapshot } from '../sim/session.ts';
 import { PidLegend } from './PidLegend.tsx';
 import { RamBar } from './RamBar.tsx';
+import { MmuTable } from './MmuTable.tsx';
 
 interface SimulationScreenProps {
   setup: SimulationSetup;
@@ -57,15 +58,15 @@ export function SimulationScreen({ setup, onExit }: SimulationScreenProps) {
       </header>
 
       <section className="ram-section" aria-label="RAM">
-        <RamBar title={`RAM – ${snapshot.optimal.name}`} view={snapshot.optimal} />
-        <RamBar title={`RAM – ${snapshot.selected.name}`} view={snapshot.selected} />
+        <RamBar title={`RAM - ${snapshot.optimal.name}`} view={snapshot.optimal} />
+        <RamBar title={`RAM - ${snapshot.selected.name}`} view={snapshot.selected} />
         <PidLegend pids={livePids(snapshot)} />
       </section>
 
       <div className="columns">
         {[snapshot.optimal, snapshot.selected].map((view) => (
           <section key={view.name} aria-label={`${view.name} simulation`}>
-            <h2>{view.name}</h2>
+            <MmuTable view={view} />
           </section>
         ))}
       </div>
