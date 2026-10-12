@@ -15,6 +15,6 @@ export interface PagingAlgorithm {
   readonly name: PagingAlgorithmName;
   /** Candidates are the RAM pages not pinned by the current operation; never empty. */
   selectVictim(candidates: readonly Page[], context: EvictionContext): Page;
-  /** Value shown in the MMU table's MARK column. */
-  markOf(page: Page): string;
+  /** Value shown in the MMU table's MARK column after the operation at operationIndex ran. */
+  markOf(page: Page, operationIndex: number): string;
 }
