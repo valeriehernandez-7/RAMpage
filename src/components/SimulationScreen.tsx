@@ -1,6 +1,9 @@
 import { SPEED_OPTIONS, useSimulation, type Speed } from '../hooks/useSimulation.ts';
 import { formatOperation } from '../sim/serializer.ts';
 import type { SimulationSetup } from './SetupScreen.tsx';
+import type { SessionSnapshot } from '../sim/session.ts';
+import { PidLegend } from './PidLegend.tsx';
+import { RamBar } from './RamBar.tsx';
 
 interface SimulationScreenProps {
   setup: SimulationSetup;
@@ -53,6 +56,12 @@ export function SimulationScreen({ setup, onExit }: SimulationScreenProps) {
         </button>
       </header>
 
+      <section className="ram-section" aria-label="RAM">
+        <RamBar title={`RAM – ${snapshot.optimal.name}`} view={snapshot.optimal} />
+        <RamBar title={`RAM – ${snapshot.selected.name}`} view={snapshot.selected} />
+        <PidLegend pids={livePids(snapshot)} />
+      </section>
+
       <div className="columns">
         {[snapshot.optimal, snapshot.selected].map((view) => (
           <section key={view.name} aria-label={`${view.name} simulation`}>
@@ -62,4 +71,10 @@ export function SimulationScreen({ setup, onExit }: SimulationScreenProps) {
       </div>
     </main>
   );
+}
+
+/** PIDs that currently own at least one page in either simulation. */
+function livePids(snapshot: SessionSnapshot): number[] {
+  const pids = new Set([...snapshot.optimal.pages, ...snapshot.selected.pages].map((page) => page.pid));
+  return [...pids].sort((a, b) => a - b);
 }
