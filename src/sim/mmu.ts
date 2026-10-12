@@ -49,11 +49,15 @@ export class Mmu {
     this.algorithm = algorithm;
   }
 
-  /** operationIndex is the position in the full sequence; OPT uses it to look ahead. */
-  execute(operation: Operation, operationIndex: number): void {
+  /**
+   * operationIndex is the position in the full sequence; OPT uses it to look ahead.
+   * Returns the ptr assigned by new (the spec's new returns it), or null otherwise.
+   */
+  execute(operation: Operation, operationIndex: number): number | null {
+    let allocatedPtr: number | null = null;
     switch (operation.kind) {
       case 'new':
-        this.allocate(operation.pid, operation.sizeBytes, operationIndex);
+        allocatedPtr = this.allocate(operation.pid, operation.sizeBytes, operationIndex);
         break;
       case 'use':
         this.use(operation.ptr, operationIndex);
@@ -68,6 +72,7 @@ export class Mmu {
         break;
     }
     this.stats.runningProcessCount = this.symbolTables.size;
+    return allocatedPtr;
   }
 
   getStats(): SimulationStats {
@@ -84,7 +89,7 @@ export class Mmu {
     return [...this.frames];
   }
 
-  private allocate(pid: number, sizeBytes: number, operationIndex: number): void {
+    private allocate(pid: number, sizeBytes: number, operationIndex: number): number {
     if (this.killedPids.has(pid)) {
       throw new SimulationError(`process ${pid} already ended with kill`);
     }
@@ -104,7 +109,9 @@ export class Mmu {
     for (const pageId of pageIds) {
       this.load(this.pageById(pageId), ptr, operationIndex);
     }
-  }
+    
+    return ptr;
+}
 
   private use(ptr: number, operationIndex: number): void {
     for (const pageId of this.pointerById(ptr).pageIds) {

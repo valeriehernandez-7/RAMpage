@@ -5,6 +5,7 @@ import { PAGE_SIZE_BYTES, RAM_FRAME_COUNT, RAM_SIZE_BYTES } from '../src/sim/con
 import { Mmu, SimulationError } from '../src/sim/mmu.ts';
 import type { Operation } from '../src/sim/types.ts';
 import { ANNEX_1_OPERATIONS } from './fixtures/annex1.ts';
+import { generateOperations } from '../src/sim/generator.ts';
 
 function run(mmu: Mmu, operations: readonly Operation[], firstIndex = 0): void {
   operations.forEach((operation, offset) => mmu.execute(operation, firstIndex + offset));
@@ -98,4 +99,18 @@ test('rejects operations that break the sequence rules', () => {
   assert.throws(() => mmu.execute({ kind: 'use', ptr: 1 }, 0), SimulationError);
   mmu.execute({ kind: 'kill', pid: 1 }, 0);
   assert.throws(() => mmu.execute({ kind: 'new', pid: 1, sizeBytes: 10 }, 1), SimulationError);
+});
+
+test('new returns pointers numbered by order of appearance, as the operations file assumes', () => {
+  const annexMmu = new Mmu(new FifoAlgorithm());
+  const annexPointers = ANNEX_1_OPERATIONS.map((operation, index) => annexMmu.execute(operation, index));
+  assert.deepEqual(annexPointers.filter((ptr) => ptr !== null), [1, 2, 3, 4]);
+
+  const generated = generateOperations({ seed: 7, processCount: 50, operationCount: 1000 });
+  const generatedMmu = new Mmu(new FifoAlgorithm());
+  const allocated = generated
+    .map((operation, index) => generatedMmu.execute(operation, index))
+    .filter((ptr) => ptr !== null);
+  const newCount = generated.filter((operation) => operation.kind === 'new').length;
+  assert.deepEqual(allocated, Array.from({ length: newCount }, (_, index) => index + 1));
 });
