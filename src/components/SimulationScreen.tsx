@@ -1,10 +1,11 @@
 import { SPEED_OPTIONS, useSimulation, type Speed } from '../hooks/useSimulation.ts';
 import { formatOperation } from '../sim/serializer.ts';
 import type { SimulationSetup } from './SetupScreen.tsx';
-import type { SessionSnapshot } from '../sim/session.ts';
+import type { AlgorithmView, SessionSnapshot } from '../sim/session.ts';
 import { PidLegend } from './PidLegend.tsx';
 import { RamBar } from './RamBar.tsx';
 import { MmuTable } from './MmuTable.tsx';
+import { StatsPanel } from './StatsPanel.tsx';
 
 interface SimulationScreenProps {
   setup: SimulationSetup;
@@ -57,6 +58,8 @@ export function SimulationScreen({ setup, onExit }: SimulationScreenProps) {
         </button>
       </header>
 
+      {snapshot.isFinished && <ResultsSummary optimal={snapshot.optimal} selected={snapshot.selected} />}
+
       <section className="ram-section" aria-label="RAM">
         <RamBar title={`RAM - ${snapshot.optimal.name}`} view={snapshot.optimal} />
         <RamBar title={`RAM - ${snapshot.selected.name}`} view={snapshot.selected} />
@@ -67,6 +70,7 @@ export function SimulationScreen({ setup, onExit }: SimulationScreenProps) {
         {[snapshot.optimal, snapshot.selected].map((view) => (
           <section key={view.name} aria-label={`${view.name} simulation`}>
             <MmuTable view={view} />
+            <StatsPanel stats={view.stats} />
           </section>
         ))}
       </div>
@@ -78,4 +82,21 @@ export function SimulationScreen({ setup, onExit }: SimulationScreenProps) {
 function livePids(snapshot: SessionSnapshot): number[] {
   const pids = new Set([...snapshot.optimal.pages, ...snapshot.selected.pages].map((page) => page.pid));
   return [...pids].sort((a, b) => a - b);
+}
+
+interface ResultsSummaryProps {
+  optimal: AlgorithmView;
+  selected: AlgorithmView;
+}
+
+function ResultsSummary({ optimal, selected }: ResultsSummaryProps) {
+  const extraFaults = selected.stats.faultCount - optimal.stats.faultCount;
+  const extraSeconds = selected.stats.clockS - optimal.stats.clockS;
+
+  return (
+    <p className="results" role="status">
+      Simulation finished. {selected.name} had {extraFaults} more page faults than OPT ({selected.stats.faultCount}{' '}
+      vs. {optimal.stats.faultCount}), which cost {extraSeconds} s of extra simulated time.
+    </p>
+  );
 }
