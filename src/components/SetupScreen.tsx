@@ -10,6 +10,8 @@ import { downloadTextFile } from '../ui/download.ts';
 export interface SimulationSetup {
   readonly operations: readonly Operation[];
   readonly algorithm: SelectableAlgorithmName;
+  /** Human-readable origin of the operations, shown on the simulation screen. */
+  readonly sourceLabel: string;
 }
 
 interface SetupScreenProps {
@@ -73,9 +75,14 @@ export function SetupScreen({ onStart }: SetupScreenProps) {
     );
   }
 
+  function describeSource(): string {
+    if (source === 'file') return `File ${loadedFile?.name ?? ''}`;
+    return `Seed ${seed} · P ${processCount} · N ${operationCount}`;
+  }
+
   function startSimulation(): void {
     const operations = currentOperations();
-    if (operations !== null) onStart({ operations, algorithm });
+    if (operations !== null) onStart({ operations, algorithm, sourceLabel: describeSource() });
   }
 
   return (

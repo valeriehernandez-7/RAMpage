@@ -1,10 +1,10 @@
 import { SPEED_OPTIONS, useSimulation, type Speed } from '../hooks/useSimulation.ts';
 import { formatOperation } from '../sim/serializer.ts';
-import type { SimulationSetup } from './SetupScreen.tsx';
 import type { AlgorithmView, SessionSnapshot } from '../sim/session.ts';
+import { MmuTable } from './MmuTable.tsx';
 import { PidLegend } from './PidLegend.tsx';
 import { RamBar } from './RamBar.tsx';
-import { MmuTable } from './MmuTable.tsx';
+import type { SimulationSetup } from './SetupScreen.tsx';
 import { StatsPanel } from './StatsPanel.tsx';
 
 interface SimulationScreenProps {
@@ -32,11 +32,16 @@ export function SimulationScreen({ setup, onExit }: SimulationScreenProps) {
   return (
     <main className="simulation">
       <header className="controls">
-        <p className="progress">
-          Operation {snapshot.completedCount} of {snapshot.totalCount}
-          {snapshot.lastOperation !== null && `: ${formatOperation(snapshot.lastOperation)}`}
-          {snapshot.lastAllocatedPtr !== null && ` → ptr ${snapshot.lastAllocatedPtr}`}
-        </p>
+        <div className="status">
+          <p className="setup-summary">
+            {setup.algorithm} vs. OPT · {setup.sourceLabel}
+          </p>
+          <p className="progress">
+            Operation {snapshot.completedCount} of {snapshot.totalCount}
+            {snapshot.lastOperation !== null && `: ${formatOperation(snapshot.lastOperation)}`}
+            {snapshot.lastAllocatedPtr !== null && ` → ptr ${snapshot.lastAllocatedPtr}`}
+          </p>
+        </div>
         <button type="button" className="primary" onClick={isRunning ? pause : play} disabled={snapshot.isFinished}>
           {isRunning ? 'Pause' : 'Play'}
         </button>
@@ -64,24 +69,22 @@ export function SimulationScreen({ setup, onExit }: SimulationScreenProps) {
         <RamBar title={`RAM - ${snapshot.optimal.name}`} view={snapshot.optimal} />
         <RamBar title={`RAM - ${snapshot.selected.name}`} view={snapshot.selected} />
         <PidLegend pids={livePids(snapshot)} />
+        <p className="hint">
+          <span aria-hidden="true">▶</span> used by the last operation (outlined in RAM) ·{' '}
+          <span aria-hidden="true">↓</span> moved to disk by the last operation
+        </p>
       </section>
 
       <div className="columns">
         {[snapshot.optimal, snapshot.selected].map((view) => (
           <section key={view.name} aria-label={`${view.name} simulation`}>
-            <MmuTable view={view} />
+            <MmuTable view={view} followActivity={!isRunning} />
             <StatsPanel stats={view.stats} />
           </section>
         ))}
       </div>
     </main>
   );
-}
-
-/** PIDs that currently own at least one page in either simulation. */
-function livePids(snapshot: SessionSnapshot): number[] {
-  const pids = new Set([...snapshot.optimal.pages, ...snapshot.selected.pages].map((page) => page.pid));
-  return [...pids].sort((a, b) => a - b);
 }
 
 interface ResultsSummaryProps {
@@ -99,4 +102,10 @@ function ResultsSummary({ optimal, selected }: ResultsSummaryProps) {
       vs. {optimal.stats.faultCount}), which cost {extraSeconds} s of extra simulated time.
     </p>
   );
+}
+
+/** PIDs that currently own at least one page in either simulation. */
+function livePids(snapshot: SessionSnapshot): number[] {
+  const pids = new Set([...snapshot.optimal.pages, ...snapshot.selected.pages].map((page) => page.pid));
+  return [...pids].sort((a, b) => a - b);
 }
