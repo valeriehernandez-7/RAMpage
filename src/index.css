@@ -354,3 +354,10 @@ legend {
 .marker {
   margin-right: 0.35rem;
 }
+
+.activity-summary {
+  margin: -0.25rem 0 0.5rem;
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}

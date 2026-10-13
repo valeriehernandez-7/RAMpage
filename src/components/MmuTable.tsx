@@ -1,6 +1,7 @@
 import { useEffect, useRef, type CSSProperties } from 'react';
 import type { AlgorithmView } from '../sim/session.ts';
 import { pidColor } from '../ui/pidColor.ts';
+import type { PageActivity } from '../sim/types.ts';
 
 interface MmuTableProps {
   view: AlgorithmView;
@@ -9,6 +10,9 @@ interface MmuTableProps {
 }
 
 const COLUMNS = ['PAGE ID', 'PID', 'LOADED', 'L-ADDR', 'M-ADDR', 'D-ADDR', 'LOADED-T', 'MARK'] as const;
+
+// Long lists (e.g. a use of a 100-page pointer) are cut short to keep the line readable.
+const MAX_LISTED_PAGES = 6;
 
 /** Every live page of one simulation, with the columns of Annex 2. */
 export function MmuTable({ view, followActivity }: MmuTableProps) {
@@ -28,6 +32,7 @@ export function MmuTable({ view, followActivity }: MmuTableProps) {
   return (
     <>
       <h2 id={titleId}>MMU - {view.name}</h2>
+      <p className="activity-summary">{describeActivity(view.activity)}</p>
       {/* Focusable so keyboard users can scroll the table. */}
       <div ref={containerRef} className="mmu" tabIndex={0} role="region" aria-labelledby={titleId}>
         <table aria-labelledby={titleId}>
@@ -99,4 +104,21 @@ function Marker({ symbol, description }: { symbol: string; description: string }
       <span className="visually-hidden">{description}: </span>
     </>
   );
+}
+
+function describeActivity({ touchedPageIds, evictedPageIds }: PageActivity): string {
+  if (touchedPageIds.length === 0 && evictedPageIds.length === 0) {
+    return 'Last operation: no pages used or evicted';
+  }
+  const parts = [`used ${listPages(touchedPageIds)}`];
+  if (evictedPageIds.length > 0) parts.push(`evicted ${listPages(evictedPageIds)}`);
+  return `Last operation: ${parts.join(' · ')}`;
+}
+
+function listPages(pageIds: readonly number[]): string {
+  if (pageIds.length === 0) return 'no pages';
+  const noun = pageIds.length === 1 ? 'page' : 'pages';
+  const shown = pageIds.slice(0, MAX_LISTED_PAGES).join(', ');
+  const hidden = pageIds.length - MAX_LISTED_PAGES;
+  return hidden > 0 ? `${noun} ${shown} and ${hidden} more` : `${noun} ${shown}`;
 }
