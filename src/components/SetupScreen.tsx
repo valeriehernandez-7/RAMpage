@@ -26,10 +26,10 @@ interface LoadedFile {
 const SELECTABLE_ALGORITHMS: readonly SelectableAlgorithmName[] = ['FIFO', 'SC', 'LRU', 'LFU'];
 
 const ALGORITHM_LABELS: Record<SelectableAlgorithmName, string> = {
-  FIFO: 'FIFO — First In, First Out',
-  SC: 'SC — Second Chance',
-  LRU: 'LRU — Least Recently Used',
-  LFU: 'LFU — Least Frequently Used',
+  FIFO: 'FIFO - First In, First Out',
+  SC: 'SC - Second Chance',
+  LRU: 'LRU - Least Recently Used',
+  LFU: 'LFU - Least Frequently Used',
 };
 
 const DEFAULT_SEED = '42';
