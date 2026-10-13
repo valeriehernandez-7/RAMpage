@@ -48,3 +48,10 @@ export interface SimulationStats {
   diskPageCount: number;
   internalFragmentationBytes: number;
 }
+
+export interface PageActivity {
+  /** Pages hit or loaded by the most recent operation. */
+  readonly touchedPageIds: readonly number[];
+  /** Pages moved to disk to make room during the most recent operation. */
+  readonly evictedPageIds: readonly number[];
+}

@@ -1,6 +1,6 @@
 import { createAlgorithm } from './algorithms/createAlgorithm.ts';
 import { Mmu, SimulationError } from './mmu.ts';
-import type { Operation, Page, PagingAlgorithmName, SelectableAlgorithmName, SimulationStats } from './types.ts';
+import type { Operation, Page, PageActivity, PagingAlgorithmName, SelectableAlgorithmName, SimulationStats } from './types.ts';
 import { validateOperations } from './validator.ts';
 
 export interface AlgorithmView {
@@ -10,6 +10,8 @@ export interface AlgorithmView {
   readonly frames: readonly (number | null)[];
   /** MARK column value per page id. */
   readonly marks: ReadonlyMap<number, string>;
+  /** What the last operation did, for highlighting. */
+  readonly activity: PageActivity;
 }
 
 export interface SessionSnapshot {
@@ -84,5 +86,6 @@ function viewOf(mmu: Mmu, lastIndex: number): AlgorithmView {
     pages,
     frames: mmu.snapshotFrames(),
     marks: new Map(pages.map((page) => [page.id, mmu.algorithm.markOf(page, lastIndex)])),
+    activity: mmu.lastActivity(),
   };
 }

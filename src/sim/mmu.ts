@@ -8,7 +8,7 @@ import {
   RAM_FRAME_COUNT,
 } from './constants.ts';
 import { pageCountFor } from './memory.ts';
-import type { Operation, Page, PointerAllocation, SimulationStats } from './types.ts';
+import type { Operation, Page, PageActivity, PointerAllocation, SimulationStats } from './types.ts';
 
 export class SimulationError extends Error {
   constructor(message: string) {
@@ -44,6 +44,8 @@ export class Mmu {
   private nextPtr = 1;
   private nextSequence = 1;
   private nextDiskSlot = 1;
+  private touchedPageIds: number[] = [];
+  private evictedPageIds: number[] = [];
 
   constructor(algorithm: PagingAlgorithm) {
     this.algorithm = algorithm;
@@ -54,6 +56,8 @@ export class Mmu {
    * Returns the ptr assigned by new (the spec's new returns it), or null otherwise.
    */
   execute(operation: Operation, operationIndex: number): number | null {
+    this.touchedPageIds = [];
+    this.evictedPageIds = [];
     let allocatedPtr: number | null = null;
     switch (operation.kind) {
       case 'new':
@@ -89,7 +93,12 @@ export class Mmu {
     return [...this.frames];
   }
 
-    private allocate(pid: number, sizeBytes: number, operationIndex: number): number {
+  /** Pages touched and evicted by the most recent operation. */
+  lastActivity(): PageActivity {
+    return { touchedPageIds: [...this.touchedPageIds], evictedPageIds: [...this.evictedPageIds] };
+  }
+
+  private allocate(pid: number, sizeBytes: number, operationIndex: number): number {
     if (this.killedPids.has(pid)) {
       throw new SimulationError(`process ${pid} already ended with kill`);
     }
@@ -109,9 +118,9 @@ export class Mmu {
     for (const pageId of pageIds) {
       this.load(this.pageById(pageId), ptr, operationIndex);
     }
-    
+
     return ptr;
-}
+  }
 
   private use(ptr: number, operationIndex: number): void {
     for (const pageId of this.pointerById(ptr).pageIds) {
@@ -147,6 +156,7 @@ export class Mmu {
   }
 
   private recordHit(page: Page): void {
+    this.touchedPageIds.push(page.id);
     page.lastAccessSequence = this.issueSequence();
     page.accessCount++;
     page.referenceBit = true;
@@ -156,6 +166,7 @@ export class Mmu {
 
   /** Brings a page into RAM as a page fault, evicting a victim if every frame is taken. */
   private load(page: Page, pinnedPtr: number, operationIndex: number): void {
+    this.touchedPageIds.push(page.id);
     const frame = this.findFreeFrame() ?? this.evict(pinnedPtr, operationIndex);
 
     if (page.diskSlot !== null) {
@@ -190,6 +201,7 @@ export class Mmu {
     }
 
     const victim = this.algorithm.selectVictim(candidates, this.evictionContext(operationIndex));
+    this.evictedPageIds.push(victim.id);
     const frame = victim.frame;
     if (frame === null) {
       throw new SimulationError(`${this.algorithm.name} chose page ${victim.id}, which is not in RAM`);

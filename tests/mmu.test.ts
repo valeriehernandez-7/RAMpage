@@ -114,3 +114,21 @@ test('new returns pointers numbered by order of appearance, as the operations fi
   const newCount = generated.filter((operation) => operation.kind === 'new').length;
   assert.deepEqual(allocated, Array.from({ length: newCount }, (_, index) => index + 1));
 });
+
+test('reports the pages touched and evicted by the last operation', () => {
+  const mmu = new Mmu(new FifoAlgorithm());
+
+  mmu.execute(PINNING_SCENARIO[0], 0);
+  assert.equal(mmu.lastActivity().touchedPageIds.length, RAM_FRAME_COUNT);
+  assert.deepEqual(mmu.lastActivity().evictedPageIds, []);
+
+  mmu.execute(PINNING_SCENARIO[1], 1);
+  assert.deepEqual(mmu.lastActivity(), { touchedPageIds: [101], evictedPageIds: [1] });
+
+  mmu.execute(PINNING_SCENARIO[2], 2);
+  assert.equal(mmu.lastActivity().touchedPageIds.length, RAM_FRAME_COUNT);
+  assert.deepEqual(mmu.lastActivity().evictedPageIds, [101]);
+
+  mmu.execute({ kind: 'delete', ptr: 2 }, 3);
+  assert.deepEqual(mmu.lastActivity(), { touchedPageIds: [], evictedPageIds: [] });
+});
