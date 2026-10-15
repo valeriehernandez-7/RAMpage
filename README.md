@@ -3,13 +3,11 @@
 **Page replacement simulator - the optimal algorithm (OPT) side by side with FIFO, Second Chance, LRU or LFU, visualized step by step in a web interface.**
 
 
-
 ## Demo
 
-[![RAMpage Demo](https://img.shields.io/badge/▶%20Watch-Demo%20Video-blue?style=for-the-badge)](VIDEO_URL)
+[![RAMpage Demo](https://img.shields.io/badge/▶%20Watch-Demo%20Video-blue?style=for-the-badge)](https://github.com/user-attachments/assets/eeb4b243-1c08-4764-8fcf-657c227586b3)
 
 > Video walkthrough: generating a scenario from a seed, loading an operations file and comparing each algorithm against OPT during a simulation.
-
 
 
 ## About
